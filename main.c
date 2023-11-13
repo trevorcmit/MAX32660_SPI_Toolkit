@@ -28,13 +28,16 @@
 
 void testing(void);
 
+
 void testing(void)
 {
+    printf("\n******************** Renesas Chip SPI w/ Winbond SDK Attempt ********************\n");
+    printf("This is an attempt to communicate with the Winbond flash chip using the MAX32660.\n");
+    printf("SPI0 is configured as the master (hopefully).\n\n");
+
     /***** Initialize the chip *****/
     printf("testing()...\n");
-
-    uint8_t retVal = w25qxx_basic_init(W25Q64, W25QXX_INTERFACE_SPI, W25QXX_BOOL_FALSE);
-
+    uint8_t retVal = w25qxx_basic_init(W25Q16, W25QXX_INTERFACE_SPI, W25QXX_BOOL_FALSE);
     printf("Initialization completed with value %d!\n", retVal);
 }
 
@@ -45,15 +48,13 @@ int main(void)
     printf("This is an attempt to communicate with the Winbond flash chip using the MAX32660.\n");
     printf("SPI0 is configured as the master (hopefully).\n\n");
 
-    testing();
-
-    return;
-
+    // testing();
+    // return;
 
     /***** Initialize the chip *****/
     printf("test \n");
     printf("\n--\nInitializing the chip..\n");
-    uint8_t retVal = w25qxx_basic_init(W25Q64, W25QXX_INTERFACE_SPI, W25QXX_BOOL_FALSE);
+    uint8_t retVal = w25qxx_basic_init(W25Q16, W25QXX_INTERFACE_SPI, W25QXX_BOOL_FALSE);
     printf("Initialization completed with value %d!\n", retVal);
 
 
@@ -63,19 +64,19 @@ int main(void)
     uint8_t dev_id = 0;
     printf("\n--\nGetting manufacturer and device ID..\n");
     int result = w25qxx_basic_get_id(&man_id, &dev_id);
-    printf("error num: %d\n", result);
     // Manufacturer ID should be EFh for Winbond.
     if (man_id != 0xEF) {
-        printf("Expected 0xEF for manufacterer ID, but got %x instead!\n", man_id);
-    } else {
-        printf("Yay~~ Correct manufacturer ID of 0x%02x!\n", man_id);
-    }
-    // Device ID should be 16h for W25Q64JV.
-    if (dev_id != 0x16) {
-        printf("Expected 0x16 for device ID, but got %x instead!\n", dev_id);
+        printf("Expected 0xEF for manufacterer ID, but got %X instead!\n", man_id);
     }
     else {
-        printf("Yay~~ Correct device ID of 0x%02x!\n", dev_id);
+        printf("Yay~~ Correct manufacturer ID of 0x%02X!\n", man_id);
+    }
+    // Device ID should be 16h for W25Q64JV, 14h for W25Q16JV.
+    if (dev_id != 0x14) {
+        printf("Expected 0x16 for device ID, but got %X instead!\n", dev_id);
+    }
+    else {
+        printf("Yay~~ Correct device ID of 0x%02X!\n", dev_id);
     }
 
 
@@ -91,11 +92,11 @@ int main(void)
 
     /***** Try reading an empty block *****/
     // Pick a number of bytes to read out.
-    uint32_t read_size = 128;
+    uint32_t read_size = 256;
     uint32_t read_addr = 0x0;
-    printf("\n--\nReading %d bytes from address 0x%06x.\n", read_size, read_addr);
+    printf("\n--\nReading %d bytes from address 0x%06X.\n", read_size, read_addr);
     // Malloc some space to hold the read data.
-    uint8_t * data_boi = (uint8_t*) malloc(read_size*sizeof(uint8_t));
+    uint8_t* data_boi = (uint8_t*) malloc(read_size*sizeof(uint8_t));
     // Check if the malloc worked.
     if (data_boi == NULL) {
         printf("Failed to allocate memory for data_boi.\n");
@@ -104,9 +105,10 @@ int main(void)
     // Do the read.
     if (w25qxx_basic_read(read_addr, data_boi, read_size) > 0) {
         printf("Agh, basic read threw and error :(\n");
-    } else {
+    } 
+    else {
         // Print out the read bytes as a sanity check.
-        printf("Read %d bytes! They are as follows (in hex):");
+        printf("Read %d bytes! They are as follows (in hex):", read_size);
         for (int i = 0; i < read_size; i++) {
             // Print a -- between each 256 byte page.
             if (i % 256 == 0) {
@@ -114,20 +116,28 @@ int main(void)
             }
             // Print out the address at the start of every 16 bytes.
             if (i % 16 == 0) {
-                printf("\n0x%06x |   ", read_addr + i);
-            } else if (i % 8 == 0) {
+                printf("\n0x%06X |   ", read_addr + i);
+            }
+            else if (i % 8 == 0) {
                 // Add an extra space between every 8 bytes.
                 printf("  ");
             }
             // Print out our byte.
-            printf("%02x ", data_boi[i]);
+            printf("%02X ", data_boi[i]);
         }
         printf("\n");
     }
 
+    // printf("before delay\n");
+    // // Add time delay before starting write
+    // for (int i = 0; i < 10000000; i++) {
+    //     asm("nop");
+    // }
+    // printf("After delay\n");
+
 
     /***** Try writing to a page *****/
-    uint32_t write_size = 300;
+    uint32_t write_size = 200;
     printf("\n--\nWriting %d bytes to address 0x%06x.\n", write_size, read_addr);
     // Fill our data_boi buffer with some recognizable values.
     for (int i = 0; i < write_size; i++) {
@@ -150,9 +160,11 @@ int main(void)
     // Do the write. 
     if (w25qxx_basic_write(read_addr, data_boi, write_size) > 0) {
         printf("Agh, basic write threw an error :(\n");
-    } else {
+    }
+    else {
         printf("Write finished without an error!\n");
     }
+
 
     /***** Try reading Status Register 1 to get the Busy flag *****/
 
@@ -163,7 +175,7 @@ int main(void)
         printf("Agh, basic read threw and error :(\n");
     } else {
         // Print out the read bytes as a sanity check.
-        printf("Read %d bytes! They are as follows (in hex):");
+        printf("Read %d bytes! They are as follows (in hex):", read_size);
         for (int i = 0; i < read_size; i++) {
             // Print a -- between each 256 byte page.
             if (i % 256 == 0) {

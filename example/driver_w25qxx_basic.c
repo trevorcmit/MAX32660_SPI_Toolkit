@@ -178,7 +178,7 @@ uint8_t w25qxx_basic_chip_erase(void)
 }
 
 
-/**
+/****************************************************************************
  * @brief      basic example get the manufacturer && device id information
  * @param[out] *manufacturer points to a manufacturer buffer
  * @param[out] *device_id points to a device id buffer
@@ -186,7 +186,7 @@ uint8_t w25qxx_basic_chip_erase(void)
  *             - 0 success
  *             - 1 get manufacturer device id failed
  * @note       none
- */
+****************************************************************************/
 uint8_t w25qxx_basic_get_id(uint8_t *manufacturer, uint8_t *device_id)
 {
     if (w25qxx_get_manufacturer_device_id(&gs_handle, manufacturer, device_id) != 0)
@@ -200,7 +200,7 @@ uint8_t w25qxx_basic_get_id(uint8_t *manufacturer, uint8_t *device_id)
 }
 
 
-/**
+/********************************************
  * @brief     basic example write
  * @param[in] addr is the write address
  * @param[in] *data points to a data buffer
@@ -209,7 +209,7 @@ uint8_t w25qxx_basic_get_id(uint8_t *manufacturer, uint8_t *device_id)
  *            - 0 success
  *            - 1 write failed
  * @note      none
- */
+********************************************/
 uint8_t w25qxx_basic_write(uint32_t addr, uint8_t *data, uint32_t len)
 {
     if (w25qxx_write(&gs_handle, addr, data, len) != 0)
@@ -217,13 +217,13 @@ uint8_t w25qxx_basic_write(uint32_t addr, uint8_t *data, uint32_t len)
         return 1;
     }
     else
-    {
+    {   
         return 0;
     }
 }
 
 
-/**
+/**********************************************
  * @brief      basic example read
  * @param[in]  addr is the read address
  * @param[out] *data points to a data buffer
@@ -232,7 +232,7 @@ uint8_t w25qxx_basic_write(uint32_t addr, uint8_t *data, uint32_t len)
  *             - 0 success
  *             - 1 read failed
  * @note       none
- */
+**********************************************/
 uint8_t w25qxx_basic_read(uint32_t addr, uint8_t *data, uint32_t len)
 {
     if (w25qxx_read(&gs_handle, addr, data, len) != 0)

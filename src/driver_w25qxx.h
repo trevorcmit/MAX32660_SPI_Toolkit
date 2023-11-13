@@ -4,7 +4,6 @@
  * @version   1.0.0
  * @author    Shifeng Li
  * @date      2021-07-15
- *
  * <h3>history</h3>
  * <table>
  * <tr><th>Date        <th>Version  <th>Author      <th>Description
@@ -23,11 +22,11 @@
 extern "C"{
 #endif
 
-/**
+/***************************************************
  * @defgroup w25qxx_driver w25qxx driver function
  * @brief    w25qxx driver modules
  * @{
- */
+***************************************************/
 
 /**
  * @addtogroup w25qxx_basic_driver
@@ -65,18 +64,20 @@ typedef enum
     W25QXX_BOOL_TRUE  = 0x01,        /**< true */
 } w25qxx_bool_t;
 
-/**
+
+/*****************************************************
  * @brief w25qxx address mode enumeration definition
- */
+*****************************************************/
 typedef enum
 {
     W25QXX_ADDRESS_MODE_3_BYTE = 0x00,        /**< 3 byte mode */
     W25QXX_ADDRESS_MODE_4_BYTE = 0x01,        /**< 4 byte mode */
 } w25qxx_address_mode_t;
 
+
 /**
  * @}
- */
+**/
 
 /**
  * @addtogroup w25qxx_advance_driver
@@ -128,6 +129,7 @@ typedef enum
     W25QXX_BURST_WRAP_64_BYTE = 0x60,        /**< 64 byte burst wrap */
 } w25qxx_burst_wrap_t;
 
+
 /**
  * @brief w25qxx status 1 enumeration definition
  */
@@ -142,6 +144,7 @@ typedef enum
     W25QXX_STATUS1_WRITE_ENABLE_LATCH                    = (1 << 1),        /**< write enable latch */
     W25QXX_STATUS1_ERASE_WRITE_PROGRESS                  = (1 << 0),        /**< erase / write in progress */
 } w25qxx_status1_t;
+
 
 /**
  * @brief w25qxx status 2 enumeration definition

@@ -4,7 +4,6 @@
  * @version   1.0.0
  * @author    Shifeng Li
  * @date      2021-07-15
- *
  * <h3>history</h3>
  * <table>
  * <tr><th>Date        <th>Version  <th>Author      <th>Description
@@ -14,10 +13,10 @@
 
 #include "driver_w25qxx_advance.h"
 
-
 static w25qxx_handle_t gs_handle;        /**< w25qxx handle */
 
-/**
+
+/****************************************************
  * @brief     advance example init
  * @param[in] type is the chip type
  * @param[in] interface is the chip interface
@@ -26,7 +25,7 @@ static w25qxx_handle_t gs_handle;        /**< w25qxx handle */
  *            - 0 success
  *            - 1 init failed
  * @note      none
- */
+****************************************************/
 uint8_t w25qxx_advance_init(w25qxx_type_t type, w25qxx_interface_t interface, w25qxx_bool_t dual_quad_spi_enable)
 {
     uint8_t res;
@@ -262,14 +261,15 @@ uint8_t w25qxx_advance_page_program(uint32_t addr, uint8_t *data, uint16_t len)
     }
 }
 
-/**
+
+/****************************************************
  * @brief     advance example erase the 4k sector
  * @param[in] addr is the erase address
  * @return    status code
  *            - 0 success
  *            - 1 sector erase 4k failed
  * @note      none
- */
+****************************************************/
 uint8_t w25qxx_advance_sector_erase_4k(uint32_t addr)
 {
     if (w25qxx_sector_erase_4k(&gs_handle, addr) != 0)
@@ -282,14 +282,15 @@ uint8_t w25qxx_advance_sector_erase_4k(uint32_t addr)
     }
 }
 
-/**
+
+/***************************************************
  * @brief     advance example erase the 32k block
  * @param[in] addr is the erase address
  * @return    status code
  *            - 0 success
  *            - 1 block erase 32k failed
  * @note      none
- */
+***************************************************/
 uint8_t w25qxx_advance_block_erase_32k(uint32_t addr)
 {
     if (w25qxx_block_erase_32k(&gs_handle, addr) != 0)

@@ -78,7 +78,8 @@
 #define W25QXX_COMMAND_OCTAL_WORD_READ_QUAD_IO           0xE3        /**< octal word read quad I/O */
 #define W25QXX_COMMAND_DEVICE_ID_QUAD_IO                 0x94        /**< device id quad I/O */
 
-/**
+
+/************************************************************
  * @brief      spi interface write read bytes
  * @param[in]  *handle points to a w25qxx handle structure
  * @param[in]  *in_buf points to an input buffer
@@ -89,17 +90,25 @@
  *             - 0 success
  *             - 1 write read failed
  * @note       none
- */
+************************************************************/
 static uint8_t a_w25qxx_spi_write_read(w25qxx_handle_t *handle, uint8_t *in_buf, uint32_t in_len, uint8_t *out_buf, uint32_t out_len)
 {
+    // uint8_t testes;
+    // testes = spi_qspi_write_read(0x00, 0x00, 0x00000000, 0x00, 0x00, 0x00000000, 0x00, 0x00, 0x00, in_buf, in_len, out_buf, out_len, 1);
+
+    // printf("a_w25qxx_spi_write_read()\n");
     if (handle->spi_qspi_write_read(0x00, 0x00, 0x00000000, 0x00, 0x00,                /* write read data */
                                     0x00000000, 0x00, 0x00, 
                                     0x00, in_buf, in_len, out_buf, out_len, 1) != 0)
+
+    // if (testes != 0)
     {
+        // printf("a_w25qxx_spi_write_read() failed\n");
         return 1;                                                                      /* return error */
     }
     else
     {
+        // printf("a_w25qxx_spi_write_read() success\n");
         return 0;                                                                      /* success return 0 */
     }
 }
@@ -6842,7 +6851,6 @@ uint8_t w25qxx_init(w25qxx_handle_t *handle)
     if (handle->delay_ms == NULL)                                                          /* check delay_ms */
     {
         handle->debug_print("w25qxx: delay_ms is null.\n");                                /* delay_ms is null */
-       
         return 3;                                                                          /* return error */
     }
     
@@ -6852,7 +6860,6 @@ uint8_t w25qxx_init(w25qxx_handle_t *handle)
         if (res != 0)                                                                      /* check result */
         {
             handle->debug_print("w25qxx: spi init failed.\n");                             /* spi init failed */
-           
             return 1;                                                                      /* return error */
         }
         if (handle->dual_quad_spi_enable != 0)                                             /* enable dual quad spi */
@@ -6914,7 +6921,6 @@ uint8_t w25qxx_init(w25qxx_handle_t *handle)
             {
                 handle->debug_print("w25qxx: id is invalid.\n");                           /* id is invalid */
                 (void)handle->spi_qspi_deinit();                                           /** deinit */
-                
                 return 6;                                                                  /* return error */
             }
             if (handle->type >= W25Q256)
@@ -6934,20 +6940,17 @@ uint8_t w25qxx_init(w25qxx_handle_t *handle)
             }
         }
         else                                                                               /* single spi */
-        {
-            
+        {   // NOT Quad SPI else...
             buf[0] = W25QXX_COMMAND_RELEASE_POWER_DOWN;                                    /* release power down command */
             buf[1] = 0xFF;                                                                 /* dummy */
-            buf[2] = 0xFF;                                                                 /* dummy */
-            buf[3] = 0xFF;                                                                 /* dummy */
-            res = a_w25qxx_spi_write_read(handle, (uint8_t *)buf, 4,
-                                         (uint8_t *)&id, 1);                               /* spi write read */
+            buf[2] = 0xFF;
+            buf[3] = 0xFF;
+            res = a_w25qxx_spi_write_read(handle, (uint8_t *)buf, 4, (uint8_t *)&id, 1);   /* spi write read */
           
             if (res != 0)                                                                  /* check result */
             {
                 handle->debug_print("w25qxx: release power down failed.\n");               /* release power down failed */
                 (void)handle->spi_qspi_deinit();                                           /** deinit */
-                
                 return 1;                                                                  /* return error */
             }
             buf[0] = W25QXX_COMMAND_ENABLE_RESET;                                          /* enable reset command */
@@ -6957,7 +6960,6 @@ uint8_t w25qxx_init(w25qxx_handle_t *handle)
             {
                 handle->debug_print("w25qxx: enable reset failed.\n");                     /* enable reset failed */
                 (void)handle->spi_qspi_deinit();                                           /** deinit */
-                
                 return 7;                                                                  /* return error */
             }
             buf[0] = W25QXX_COMMAND_RESET_DEVICE;                                          /* reset device command */
@@ -6967,22 +6969,19 @@ uint8_t w25qxx_init(w25qxx_handle_t *handle)
             {
                 handle->debug_print("w25qxx: reset device failed.\n");                     /* reset device failed */
                 (void)handle->spi_qspi_deinit();                                           /** deinit */
-                
                 return 7;                                                                  /* return error */
             }
             handle->delay_ms(10);                                                          /* delay 10 ms */
             buf[0] = W25QXX_COMMAND_READ_MANUFACTURER;                                     /* read manufacturer command */
             buf[1] = 0x00;                                                                 /* dummy */
-            buf[2] = 0x00;                                                                 /* dummy */
-            buf[3] = 0x00;                                                                 /* dummy */
-            res = a_w25qxx_spi_write_read(handle, (uint8_t *)buf, 4,
-                                         (uint8_t *)out, 2);                               /* spi write read */
+            buf[2] = 0x00;
+            buf[3] = 0x00;
+            res = a_w25qxx_spi_write_read(handle, (uint8_t *)buf, 4, (uint8_t *)out, 2);   /* spi write read */
          
             if (res != 0)                                                                  /* check result */
             {
                 handle->debug_print("w25qxx: get manufacturer device id failed.\n");       /* get manufacturer device id failed */
                 (void)handle->spi_qspi_deinit();                                           /** deinit */
-                
                 return 4;                                                                  /* return error */
             }
     
@@ -6991,7 +6990,6 @@ uint8_t w25qxx_init(w25qxx_handle_t *handle)
             {
                 handle->debug_print("w25qxx: id %d is invalid.\n", id);                    /* id is invalid */
                 (void)handle->spi_qspi_deinit();                                           /** deinit */
-                
                 return 6;                                                                  /* return error */
             }
             if (handle->type >= W25Q256)
@@ -7483,7 +7481,8 @@ uint8_t w25qxx_read(w25qxx_handle_t *handle, uint32_t addr, uint8_t *data, uint3
     return 0;                                                                                             /* success return 0 */
 }
 
-/**
+
+/************************************************************
  * @brief      read data
  * @param[in]  *handle points to a w25qxx handle structure
  * @param[in]  addr is the read address
@@ -7493,7 +7492,7 @@ uint8_t w25qxx_read(w25qxx_handle_t *handle, uint32_t addr, uint8_t *data, uint3
  *             - 0 success
  *             - 1 read failed
  * @note       none
- */
+************************************************************/
 static uint8_t a_w25qxx_read(w25qxx_handle_t *handle, uint32_t addr, uint8_t *data, uint32_t len)
 {
     uint8_t res;
@@ -7575,7 +7574,6 @@ static uint8_t a_w25qxx_read(w25qxx_handle_t *handle, uint32_t addr, uint8_t *da
                     if (res != 0)                                                                         /* check result */
                     {
                         handle->debug_print("w25qxx: write enable failed.\n");                            /* write enable failed */
-                       
                         return 1;                                                                         /* return error */
                     }
                     buf[0] = 0xC5;                                                                        /* write extended addr register command */
@@ -7584,25 +7582,25 @@ static uint8_t a_w25qxx_read(w25qxx_handle_t *handle, uint32_t addr, uint8_t *da
                     if (res != 0)                                                                         /* check result */
                     {
                         handle->debug_print("w25qxx: write extended addr register failed.\n");            /* write extended addr register failed */
-                       
                         return 1;                                                                         /* return error */
                     }
                 }
+
                 buf[0] = W25QXX_COMMAND_FAST_READ;                                                        /* fast read command */
                 buf[1] = (addr >> 16) & 0xFF;                                                             /* 23 - 16 bits */
-                buf[2] = (addr >> 8) & 0xFF;                                                              /* 15 - 8  bits */
-                buf[3] = (addr >> 0) & 0xFF;                                                              /* 7 - 0 bits */
+                buf[2] = (addr >> 8)  & 0xFF;                                                             /* 15 - 8  bits */
+                buf[3] = (addr >> 0)  & 0xFF;                                                             /* 7 - 0 bits */
                 buf[4] = 0x00;                                                                            /* dummy */
                 res = a_w25qxx_spi_write_read(handle, (uint8_t *)buf, 5, (uint8_t *)data, (uint32_t)len); /* spi write read */
                 if (res != 0)                                                                             /* check result */
                 {
                     handle->debug_print("w25qxx: fast read failed.\n");                                   /* fast read failed */
-                   
                     return 1;                                                                             /* return error */
                 }
             }
             else if ((handle->address_mode == W25QXX_ADDRESS_MODE_4_BYTE) && (handle->type >= W25Q256))   /* check address mode */
             {
+                // printf("not 3 byte mode\n");
                 buf[0] = W25QXX_COMMAND_FAST_READ;                                                        /* fast read command */
                 buf[1] = (addr >> 24) & 0xFF;                                                             /* 31 - 24 bits */
                 buf[2] = (addr >> 16) & 0xFF;                                                             /* 23 - 16 bits */
@@ -7613,14 +7611,12 @@ static uint8_t a_w25qxx_read(w25qxx_handle_t *handle, uint32_t addr, uint8_t *da
                 if (res != 0)                                                                             /* check result */
                 {
                     handle->debug_print("w25qxx: fast read failed.\n");                                   /* fast read failed */
-                   
                     return 1;                                                                             /* return error */
                 }
             }
             else
             {
                 handle->debug_print("w25qxx: address mode is invalid.\n");                                /* address mode is invalid */
-               
                 return 1;                                                                                 /* return error */
             }
         }
@@ -8030,8 +8026,10 @@ static uint8_t a_w25qxx_page_program(w25qxx_handle_t *handle, uint32_t addr, uin
 
     if (handle->spi_qspi == W25QXX_INTERFACE_SPI)                                                           /* spi interface */
     {
+        // printf("handle->spi_qspi == W25QXX_INTERFACE_SPI...\n");
         if (handle->dual_quad_spi_enable != 0)                                                              /* enable dual quad spi */
         {
+            printf("handle->dual_quad_spi_enable != 0...\n");
             res = a_w25qxx_qspi_write_read(handle, W25QXX_COMMAND_WRITE_ENABLE, 1,
                                            0x00000000, 0x00, 0x00,
                                            0x00000000, 0x00, 0x00,
@@ -8134,12 +8132,13 @@ static uint8_t a_w25qxx_page_program(w25qxx_handle_t *handle, uint32_t addr, uin
         }
         else                                                                                                /* single spi */
         {
+            // printf("pre write-enable command...\n");
             buf[0] = W25QXX_COMMAND_WRITE_ENABLE;                                                           /* write enable command */
             res = a_w25qxx_spi_write_read(handle, (uint8_t *)buf, 1, NULL, 0);                              /* spi write read */
+            // printf("post write-enable command...\n");
             if (res != 0)                                                                                   /* check result */
             {
                 handle->debug_print("w25qxx: write enable failed.\n");                                      /* write enable failed */
-               
                 return 1;                                                                                   /* return error */
             }
             if (handle->address_mode == W25QXX_ADDRESS_MODE_3_BYTE)                                         /* 3 address mode */
@@ -8209,7 +8208,6 @@ static uint8_t a_w25qxx_page_program(w25qxx_handle_t *handle, uint32_t addr, uin
                 if (res != 0)                                                                               /* check result */
                 {
                     handle->debug_print("w25qxx: get status1 failed.\n");                                   /* get status1 failed */
-                   
                     return 1;                                                                               /* return error */
                 }
                 if ((status & 0x01) == 0x00)                                                                /* check status */
@@ -8229,6 +8227,7 @@ static uint8_t a_w25qxx_page_program(w25qxx_handle_t *handle, uint32_t addr, uin
     }
     else
     {
+        // printf("Not Quad SPI Page program...\n");
         res = a_w25qxx_qspi_write_read(handle, W25QXX_COMMAND_WRITE_ENABLE, 4,
                                        0x00000000, 0x00, 0x00,
                                        0x00000000, 0x00, 0x00,
@@ -8253,7 +8252,6 @@ static uint8_t a_w25qxx_page_program(w25qxx_handle_t *handle, uint32_t addr, uin
                 if (res != 0)                                                                               /* check result */
                 {
                     handle->debug_print("w25qxx: write extended addr register failed.\n");                  /* write extended addr register failed */
-                   
                     return 1;                                                                               /* return error */
                 }
                 res = a_w25qxx_qspi_write_read(handle, W25QXX_COMMAND_WRITE_ENABLE, 4,
@@ -8333,7 +8331,8 @@ static uint8_t a_w25qxx_page_program(w25qxx_handle_t *handle, uint32_t addr, uin
     return 0;                                                                                               /* success return 0 */
 }
 
-/**
+
+/***********************************************************
  * @brief     write with no check
  * @param[in] *handle points to a w25qxx handle structure
  * @param[in] addr is the write address
@@ -8343,7 +8342,7 @@ static uint8_t a_w25qxx_page_program(w25qxx_handle_t *handle, uint32_t addr, uin
  *            - 0 success
  *            - 1 write failed
  * @note      none
- */
+***********************************************************/
 static uint8_t a_w25qxx_write_no_check(w25qxx_handle_t *handle, uint32_t addr, uint8_t *data, uint32_t len)
 {
     uint8_t res;
@@ -8356,7 +8355,9 @@ static uint8_t a_w25qxx_write_no_check(w25qxx_handle_t *handle, uint32_t addr, u
     }
     while( 1)                                                               /* loop */
     { 
+        // printf("while looping...\n");
         res = a_w25qxx_page_program(handle, addr, data, page_remain);       /* page program */
+        // printf("page program ...\n");
         if (res != 0)
         {
             handle->debug_print("w25qxx: page program failed.\n");          /* page program failed */
@@ -8386,7 +8387,8 @@ static uint8_t a_w25qxx_write_no_check(w25qxx_handle_t *handle, uint32_t addr, u
     return 0;                                                               /* success return 0 */
 }
 
-/**
+
+/***********************************************************
  * @brief     write data
  * @param[in] *handle points to a w25qxx handle structure
  * @param[in] addr is the write address
@@ -8400,7 +8402,7 @@ static uint8_t a_w25qxx_write_no_check(w25qxx_handle_t *handle, uint32_t addr, u
  *            - 4 read failed
  *            - 5 erase sector failed
  * @note      none
- */
+***********************************************************/
 uint8_t w25qxx_write(w25qxx_handle_t *handle, uint32_t addr, uint8_t *data, uint32_t len)
 {
     uint8_t res;
@@ -8425,53 +8427,59 @@ uint8_t w25qxx_write(w25qxx_handle_t *handle, uint32_t addr, uint8_t *data, uint
     {
         sec_remain = len;                                                                      /* set remain */
     }
-    while(1)                                                                                   /* loop */
+
+    while (1)                                                                                   /* loop */
     {    
+        printf("w25qxx_write: while loop starts...\n");
+
         res = a_w25qxx_read(handle, sec_pos * 4096, handle->buf_4k, 4096);                     /* read 4k data */
         if (res != 0)
         {
             handle->debug_print("w25qxx: read failed.\n");                                     /* read failed */
-           
             return 4;                                                                          /* return error */
         }
         for (i = 0; i< sec_remain; i++)                                                        /* sec_remain length */
-        {
+        {   
             if (handle->buf_4k[sec_off + i] != 0xFF)                                           /* check 0xFF */
             {
                 break;                                                                         /* break loop */
             }
         }
-        if (i < sec_remain)                                                                    /* not all is 0xFF */
-        {
-            res = a_w25qxx_erase_sector(handle, sec_pos * 4096);                               /* erase sector */
-            if (res != 0)
-            {
-                handle->debug_print("w25qxx: erase sector failed.\n");                         /* erase sector failed */
-               
-                return 5;                                                                      /* return error */
-            }
-            for (i = 0; i<sec_remain; i++)                                                     /* sec_remain length */
-            {
-                handle->buf_4k[i + sec_off] = data[i];                                         /* copy data */
-            }
-            res = a_w25qxx_write_no_check(handle, sec_pos * 4096, handle->buf_4k, 4096);       /* write data no check */
-            if (res != 0)                                                                      /* check result */
-            {
-                handle->debug_print("w25qxx: write failed.\n");                                /* write failed */
-               
-                return 1;                                                                      /* return error */
-            }
-        }
-        else
-        {
+
+        // printf("Passed for loop..\n");
+        // printf("past here...\n");
+
+        // if (i < sec_remain)                                                                    /* not all is 0xFF */
+        // {
+        //     printf("got into not all is 0xff case...\n");
+        //     res = a_w25qxx_erase_sector(handle, sec_pos * 4096);                               /* erase sector */
+        //     printf("after sector erase...\n");
+        //     if (res != 0)
+        //     {
+        //         handle->debug_print("w25qxx: erase sector failed.\n");                         /* erase sector failed */
+        //         return 5;                                                                      /* return error */
+        //     }
+        //     printf("after res if statement...\n");
+        //     for (i = 0; i<sec_remain; i++)                                                     /* sec_remain length */
+        //     {
+        //         handle->buf_4k[i + sec_off] = data[i];                                         /* copy data */
+        //     }
+        //     res = a_w25qxx_write_no_check(handle, sec_pos * 4096, handle->buf_4k, 4096);       /* write data no check */
+        //     if (res != 0)                                                                      /* check result */
+        //     {
+        //         handle->debug_print("w25qxx: write failed.\n");                                /* write failed */
+        //         return 1;                                                                      /* return error */
+        //     }
+        // }
+        // else
+        // {
             res = a_w25qxx_write_no_check(handle, addr, data, sec_remain);                     /* write data */
             if (res != 0)                                                                      /* check result */
             {
                 handle->debug_print("w25qxx: write failed.\n");                                /* write failed */
-               
                 return 1;                                                                      /* return error */
             }
-        }    
+        // }    
         if (len == sec_remain)                                                                 /* check length length*/
         {
             break;                                                                             /* break loop */
