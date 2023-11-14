@@ -31,19 +31,133 @@ void testing(void);
 
 void testing(void)
 {
-    printf("\n******************** Renesas Chip SPI w/ Winbond SDK Attempt ********************\n");
-    printf("This is an attempt to communicate with the Winbond flash chip using the MAX32660.\n");
-    printf("SPI0 is configured as the master (hopefully).\n\n");
+    printf("\n\n\n******************** Renesas Chip SPI w/ Winbond SDK Attempt ********************\n");
 
-    /***** Initialize the chip *****/
-    printf("testing()...\n");
-    uint8_t retVal = w25qxx_basic_init(W25Q16, W25QXX_INTERFACE_SPI, W25QXX_BOOL_FALSE);
-    printf("Initialization completed with value %d!\n", retVal);
+    uint8_t retVal = w25qxx_basic_init(0x1F16, W25QXX_INTERFACE_SPI, W25QXX_BOOL_FALSE);
+    printf("\nInitialization completed with value %d.\n", retVal);
+
+
+    /***** Try reading the manufacturer and device ID information *****/
+    uint8_t man_id = 0;
+    uint8_t dev_id = 0;
+    printf("\n--\nGetting manufacturer and device ID for Renesas chip...\n");
+    int result = w25qxx_basic_get_id(&man_id, &dev_id);
+    if (man_id != 0x1F)
+    {
+        printf("Expected 0x1F for manufacterer ID, but got %X instead!\n", man_id);
+    }
+    else
+    {
+        printf("Yay~~ Correct manufacturer ID of 0x%02X!\n", man_id);
+    }
+    if (dev_id != 0x16)
+    {
+        printf("Expected 0x16 for device ID, but got %X instead!\n", dev_id);
+    }
+    else
+    {
+        printf("Yay~~ Correct device ID of 0x%02X!\n", dev_id);
+    }
+    
+
+    /***** Try erasing the chip *****/
+    printf("\n--\nConducting a chip erase. This may take a few seconds...\n");
+    if (w25qxx_basic_chip_erase() > 0)
+    {
+        printf("Agh, basic chip erase threw and error :(\n");
+    }
+    else
+    {
+        printf("Chip erase finished without an error!\n");
+    }
+    
+
+    /***** Try reading an empty block *****/
+    uint32_t read_size = 256; // Pick a number of bytes to read out.
+    uint32_t read_addr = 0x0;
+    printf("\n--\nReading %d bytes from address 0x%06X.\n", read_size, read_addr);
+    uint8_t* data_boi = (uint8_t*) malloc(read_size*sizeof(uint8_t));   // Malloc some space to hold the read data.
+    if (data_boi == NULL)
+    {
+        printf("Failed to allocate memory for data_boi.\n"); // Check if the malloc worked.
+        exit(0);
+    }
+    // Do the read.
+    if (w25qxx_basic_read(read_addr, data_boi, read_size) > 0) {
+        printf("Agh, basic read threw and error :(\n");
+    } 
+    else {
+        printf("Read %d bytes! They are as follows (in hex):", read_size);
+        for (int i = 0; i < read_size; i++) {
+            if (i % 256 == 0)    { printf("\n\nPage %d:", (read_addr + i)/256); }
+            if (i % 16 == 0)     { printf("\n0x%06X |   ", read_addr + i); }
+            else if (i % 8 == 0) { printf("  "); } 
+            printf("%02X ", data_boi[i]);
+        }
+        printf("\n");
+    }
+
+
+    /***** Try writing to a page *****/
+    /***** Try writing to a page *****/
+    uint32_t write_size = 200;
+    printf("\n--\nWriting %d bytes to address 0x%06x.\n", write_size, read_addr);
+    // Fill our data_boi buffer with some recognizable values.
+    for (int i = 0; i < write_size; i++) {
+        switch(i % 4) {
+            case 0:
+                data_boi[i] = 0xde;
+                break;
+            case 1:
+                data_boi[i] = 0xad;
+                break;
+            case 2:
+                data_boi[i] = 0xbe;
+                break;
+            case 3:
+                data_boi[i] = 0xef;
+                break;
+        }
+    }
+
+    // Do the write. 
+    if (w25qxx_basic_write(read_addr, data_boi, write_size) > 0) {
+        printf("Agh, basic write threw an error :(\n");
+    }
+    else {
+        printf("Write finished without an error!\n");
+    }
+
+
+    /***** Try reading the page you just wrote *****/
+    printf("\n--\nReading %d bytes from address 0x%06x.\n", read_size, read_addr);
+    // Do the read.
+    if (w25qxx_basic_read(read_addr, data_boi, read_size) > 0) {
+        printf("Agh, basic read threw and error :(\n");
+    } 
+    else
+    {
+        printf("Read %d bytes! They are as follows (in hex):", read_size);
+        for (int i = 0; i < read_size; i++)
+        {
+            if (i % 256 == 0)    { printf("\n\nPage %d:", (read_addr + i)/256); }
+            if (i % 16 == 0)     { printf("\n0x%06x |   ", read_addr + i); } 
+            else if (i % 8 == 0) { printf("  "); }
+            printf("%02x ", data_boi[i]);
+        }
+        printf("\n");
+    }
+    
+
+    return;
 }
 
 
 int main(void)
 {
+    testing();
+    return;
+
     printf("\n************************ SPI MAX to Flash attempt ************************\n");
     printf("This is an attempt to communicate with the Winbond flash chip using the MAX32660.\n");
     printf("SPI0 is configured as the master (hopefully).\n\n");

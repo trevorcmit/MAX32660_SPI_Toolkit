@@ -1955,45 +1955,48 @@ uint8_t w25qxx_get_manufacturer_device_id(w25qxx_handle_t *handle, uint8_t *manu
     {
         return 3;                                                                          /* return error */
     }
+
     
     if (handle->spi_qspi == W25QXX_INTERFACE_SPI)                                          /* spi interface */
     {
-        if (handle->dual_quad_spi_enable != 0)                                             /* enable dual quad spi */
-        {
-            res = a_w25qxx_qspi_write_read(handle, W25QXX_COMMAND_READ_MANUFACTURER, 1,
-                                           0x00000000, 1, 3,
-                                           0x00000000, 0x00, 0x00,
-                                           0, NULL, 0x00,
-                                          (uint8_t *)out, 2, 1);                           /* qspi write read */
+        // if (handle->dual_quad_spi_enable != 0)                                             /* enable dual quad spi */
+        // {
+        //     res = a_w25qxx_qspi_write_read(handle, W25QXX_COMMAND_READ_MANUFACTURER, 1,
+        //                                    0x00000000, 1, 3,
+        //                                    0x00000000, 0x00, 0x00,
+        //                                    0, NULL, 0x00,
+        //                                   (uint8_t *)out, 2, 1);                           /* qspi write read */
+        //     printf("Passed qspi write read...\n");
+        //     if (res != 0)                                                                  /* check result */
+        //     {
+        //         handle->debug_print("w25qxx: get manufacturer device id failed.\n");       /* get manufacturer device id failed */
+               
+        //         return 1;                                                                  /* return error */
+        //     }
+        //     *manufacturer = out[0];                                                        /* set manufacturer */
+        //     *device_id = out[1];                                                           /* set device id */
+        // }
+        // else                                                                               /* single spi */
+        // {
+
+        buf[0] = W25QXX_COMMAND_READ_MANUFACTURER;                                     /* read manufacturer command */
+        buf[1] = 0x00;                                                                 /* dummy */
+        buf[2] = 0x00;                                                                 /* dummy */
+        buf[3] = 0x00;                                                                 /* dummy */
+            
+        res = a_w25qxx_spi_write_read(handle, (uint8_t *)buf, 4, (uint8_t *)out, 2);   /* spi write read */
             if (res != 0)                                                                  /* check result */
             {
                 handle->debug_print("w25qxx: get manufacturer device id failed.\n");       /* get manufacturer device id failed */
-               
                 return 1;                                                                  /* return error */
             }
             *manufacturer = out[0];                                                        /* set manufacturer */
             *device_id = out[1];                                                           /* set device id */
-        }
-        else                                                                               /* single spi */
-        {
-            buf[0] = W25QXX_COMMAND_READ_MANUFACTURER;                                     /* read manufacturer command */
-            buf[1] = 0x00;                                                                 /* dummy */
-            buf[2] = 0x00;                                                                 /* dummy */
-            buf[3] = 0x00;                                                                 /* dummy */
-            res = a_w25qxx_spi_write_read(handle, (uint8_t *)buf, 4,
-                                         (uint8_t *)out, 2);                               /* spi write read */
-            if (res != 0)                                                                  /* check result */
-            {
-                handle->debug_print("w25qxx: get manufacturer device id failed.\n");       /* get manufacturer device id failed */
-               
-                return 1;                                                                  /* return error */
-            }
-            *manufacturer = out[0];                                                        /* set manufacturer */
-            *device_id = out[1];                                                           /* set device id */
-        }
+        // }
     }
     else                                                                                   /* qspi interface */
     {
+        printf("Else case...\n");
         res = a_w25qxx_qspi_write_read(handle, W25QXX_COMMAND_READ_MANUFACTURER, 4,
                                        0x00000000, 4, 3,
                                        0x00000000, 0x00, 0x00,

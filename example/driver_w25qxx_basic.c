@@ -32,19 +32,12 @@ uint8_t w25qxx_basic_init(w25qxx_type_t type, w25qxx_interface_t interface, w25q
     
     /* link interface function */
     DRIVER_W25QXX_LINK_INIT(&gs_handle, w25qxx_handle_t); 
-    // printf("slot 1\n");
     DRIVER_W25QXX_LINK_SPI_QSPI_INIT(&gs_handle, w25qxx_interface_spi_qspi_init);
-    // printf("slot 2\n");
     DRIVER_W25QXX_LINK_SPI_QSPI_DEINIT(&gs_handle, w25qxx_interface_spi_qspi_deinit);
-    // printf("slot 3\n");
     DRIVER_W25QXX_LINK_SPI_QSPI_WRITE_READ(&gs_handle, w25qxx_interface_spi_qspi_write_read);
-    // printf("slot 4\n");
     DRIVER_W25QXX_LINK_DELAY_MS(&gs_handle, w25qxx_interface_delay_ms);
-    // printf("slot 5\n");
     DRIVER_W25QXX_LINK_DELAY_US(&gs_handle, w25qxx_interface_delay_us);
-    // printf("slot 6\n");
     DRIVER_W25QXX_LINK_DEBUG_PRINT(&gs_handle, w25qxx_interface_debug_print);
-    // printf("slot 7\n");
     
     /* set chip type */
     res = w25qxx_set_type(&gs_handle, type);

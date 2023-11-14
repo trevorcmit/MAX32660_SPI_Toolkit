@@ -114,7 +114,7 @@ uint8_t w25qxx_advance_deinit(void)
 }
 
 
-/**
+/********************************************
  * @brief     advance example write
  * @param[in] addr is the write address
  * @param[in] *data points to a data buffer
@@ -123,7 +123,7 @@ uint8_t w25qxx_advance_deinit(void)
  *            - 0 success
  *            - 1 write failed
  * @note      none
- */
+********************************************/
 uint8_t w25qxx_advance_write(uint32_t addr, uint8_t *data, uint32_t len)
 {
     if (w25qxx_write(&gs_handle, addr, data, len) != 0)
@@ -137,7 +137,7 @@ uint8_t w25qxx_advance_write(uint32_t addr, uint8_t *data, uint32_t len)
 }
 
 
-/**
+/*********************************************
  * @brief      advance example read
  * @param[in]  addr is the read address
  * @param[out] *data points to a data buffer
@@ -146,7 +146,7 @@ uint8_t w25qxx_advance_write(uint32_t addr, uint8_t *data, uint32_t len)
  *             - 0 success
  *             - 1 read failed
  * @note       none
- */
+*********************************************/
 uint8_t w25qxx_advance_read(uint32_t addr, uint8_t *data, uint32_t len)
 {
     if (w25qxx_read(&gs_handle, addr, data, len) != 0)
@@ -160,13 +160,13 @@ uint8_t w25qxx_advance_read(uint32_t addr, uint8_t *data, uint32_t len)
 }
 
 
-/**
+/***************************************
  * @brief  advance example power down
  * @return status code
  *         - 0 success
  *         - 1 power down failed
  * @note   none
- */
+***************************************/
 uint8_t w25qxx_advance_power_down(void)
 {
     if (w25qxx_power_down(&gs_handle) != 0)
@@ -180,13 +180,13 @@ uint8_t w25qxx_advance_power_down(void)
 }
 
 
-/**
+/************************************
  * @brief  advance example wake up
  * @return status code
  *         - 0 success
  *         - 1 wake up failed
  * @note   none
- */
+************************************/
 uint8_t w25qxx_advance_wake_up(void)
 {
     if (w25qxx_release_power_down(&gs_handle) != 0)
@@ -198,6 +198,7 @@ uint8_t w25qxx_advance_wake_up(void)
         return 0;
     }
 }
+
 
 /**
  * @brief  advance example chip erase
@@ -217,6 +218,7 @@ uint8_t w25qxx_advance_chip_erase(void)
         return 0;
     }
 }
+
 
 /**
  * @brief      advance example get the manufacturer && device id information
@@ -238,6 +240,7 @@ uint8_t w25qxx_advance_get_id(uint8_t *manufacturer, uint8_t *device_id)
         return 0;
     }
 }
+
 
 /**
  * @brief     advance example page program
