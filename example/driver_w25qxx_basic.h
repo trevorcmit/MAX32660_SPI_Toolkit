@@ -28,7 +28,8 @@ extern "C"{
  * @{
  */
 
-/**
+
+/**************************************************
  * @brief     basic example init
  * @param[in] type is the chip type
  * @param[in] interface is the chip interface
@@ -37,8 +38,9 @@ extern "C"{
  *            - 0 success
  *            - 1 init failed
  * @note      none
- */
+**************************************************/
 uint8_t w25qxx_basic_init(w25qxx_type_t type, w25qxx_interface_t interface, w25qxx_bool_t dual_quad_spi_enable);
+
 
 /**
  * @brief  basic example deinit
@@ -49,6 +51,7 @@ uint8_t w25qxx_basic_init(w25qxx_type_t type, w25qxx_interface_t interface, w25q
  */
 uint8_t w25qxx_basic_deinit(void);
 
+
 /**
  * @brief  basic example power down
  * @return status code
@@ -57,6 +60,7 @@ uint8_t w25qxx_basic_deinit(void);
  * @note   none
  */
 uint8_t w25qxx_basic_power_down(void);
+
 
 /**
  * @brief  basic example wake up
@@ -67,6 +71,7 @@ uint8_t w25qxx_basic_power_down(void);
  */
 uint8_t w25qxx_basic_wake_up(void);
 
+
 /**
  * @brief  basic example chip erase
  * @return status code
@@ -75,6 +80,7 @@ uint8_t w25qxx_basic_wake_up(void);
  * @note   none
  */
 uint8_t w25qxx_basic_chip_erase(void);
+
 
 /**
  * @brief      basic example get the manufacturer && device id information
@@ -86,6 +92,7 @@ uint8_t w25qxx_basic_chip_erase(void);
  * @note       none
  */
 uint8_t w25qxx_basic_get_id(uint8_t *manufacturer, uint8_t *device_id);
+
 
 /**
  * @brief     basic example write
@@ -99,6 +106,7 @@ uint8_t w25qxx_basic_get_id(uint8_t *manufacturer, uint8_t *device_id);
  */
 uint8_t w25qxx_basic_write(uint32_t addr, uint8_t *data, uint32_t len);
 
+
 /**
  * @brief      basic example read
  * @param[in]  addr is the read address
@@ -110,6 +118,7 @@ uint8_t w25qxx_basic_write(uint32_t addr, uint8_t *data, uint32_t len);
  * @note       none
  */
 uint8_t w25qxx_basic_read(uint32_t addr, uint8_t *data, uint32_t len);
+
 
 /**
  * @}

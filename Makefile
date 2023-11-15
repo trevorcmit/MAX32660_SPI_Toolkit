@@ -28,7 +28,6 @@
  # trademarks, maskwork rights, or any other form of intellectual
  # property whatsoever. Maxim Integrated Products, Inc. retains all
  # ownership rights.
- #
 ###############################################################################
 
 # ** Readme! **

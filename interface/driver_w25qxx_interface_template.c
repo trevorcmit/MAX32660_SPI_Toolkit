@@ -1,40 +1,17 @@
-/**
- * Copyright (c) 2015 - present LibDriver All rights reserved
- * 
- * The MIT License (MIT)
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE. 
- *
+/*********************************************************************
  * @file      driver_w25qxx_interface_template.c
  * @brief     driver w25qxx interface template source file
  * @version   1.0.0
  * @author    Shifeng Li
  * @date      2021-07-15
- *
  * <h3>history</h3>
  * <table>
  * <tr><th>Date        <th>Version  <th>Author      <th>Description
  * <tr><td>2021/07/15  <td>1.0      <td>Shifeng Li  <td>first upload
  * </table>
- */
+*********************************************************************/
 
-/***** Includes *****/ //Copied from SPI_MasterSlave
+/***** Includes *****/ // Copied from SPI_MasterSlave
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -63,17 +40,15 @@
 
 #define SPI_MASTER MXC_SPI0 //MXC_SPIMSS // Set SPI0 to be the master
 #define SPI_MASTER_SSIDX 0
-//#define SPI_SLAVE MXC_SPI0
-//#define SPI_SLAVE_SSIDX 0
-//#define SPI_SLAVE_IRQ SPI0_IRQn
 
-/**
+
+/***************************************
  * @brief  interface spi qspi bus init
  * @return status code
  *         - 0 success
  *         - 1 spi qspi init failed
  * @note   none
- */
+***************************************/
 uint8_t w25qxx_interface_spi_qspi_init(void)
 {
     /***** Configure master (SPIMSS) *****/
@@ -92,13 +67,14 @@ uint8_t w25qxx_interface_spi_qspi_init(void)
     return 0;
 }
 
-/**
+
+/*****************************************
  * @brief  interface spi qspi bus deinit
  * @return status code
  *         - 0 success
  *         - 1 spi qspi deinit failed
  * @note   none
- */
+*****************************************/
 uint8_t w25qxx_interface_spi_qspi_deinit(void)
 {
     if (MXC_SPI_Shutdown(SPI_MASTER) != E_NO_ERROR) {
@@ -108,7 +84,8 @@ uint8_t w25qxx_interface_spi_qspi_deinit(void)
     return 0;
 }
 
-/**
+
+/**************************************************************
  * @brief      interface spi qspi bus write read
  * @param[in]  instruction is the sent instruction
  * @param[in]  instruction_line is the instruction phy lines
@@ -128,7 +105,7 @@ uint8_t w25qxx_interface_spi_qspi_deinit(void)
  *             - 0 success
  *             - 1 write read failed
  * @note       none
- */
+**************************************************************/
 uint8_t w25qxx_interface_spi_qspi_write_read(uint8_t instruction, uint8_t instruction_line,
                                              uint32_t address, uint8_t address_line, uint8_t address_len,
                                              uint32_t alternate, uint8_t alternate_line, uint8_t alternate_len,
@@ -204,13 +181,6 @@ uint8_t w25qxx_interface_spi_qspi_write_read(uint8_t instruction, uint8_t instru
         return 1;
     }
 
-    // // Do a quick printout of the message because I don't know what I'm doing.
-    // printf("--\nMessage sent: ");
-    // for (int i = 0; i < tx_size; i++) {
-    //     printf("0x%02x ", master_tx[i]);
-    // }
-    // printf("\n");
-
     /***** Initialize Transaction Parameters *****/
     master_req.spi = SPI_MASTER;
     master_req.txData = (uint8_t *) master_tx;
@@ -223,24 +193,8 @@ uint8_t w25qxx_interface_spi_qspi_write_read(uint8_t instruction, uint8_t instru
     master_req.rxCnt = 0; // Number of bytes stored in rxData.
     master_req.completeCB = NULL; // pointer to function called when transaction is complete.
 
-    
-    // Unneeded here, I think..
-    // slave_req.spi = SPI_SLAVE;
-    // slave_req.txData = (uint8_t *)slave_tx;
-    // slave_req.rxData = (uint8_t *)slave_rx;
-    // slave_req.txLen = DATA_LEN;
-    // slave_req.rxLen = DATA_LEN;
-    // slave_req.ssIdx = SPI_SLAVE_SSIDX;
-    // slave_req.ssDeassert = 1;
-    // slave_req.txCnt = 0;
-    // slave_req.rxCnt = 0;
-    // slave_req.completeCB = NULL;
-
     /***** Perform Transaction *****/
-    //MXC_SPI_SlaveTransactionAsync(&slave_req); // Unneeded here, I think..
-    //printf("Performing SPI transaction..\n");
     MXC_SPI_MasterTransaction(&master_req);
-    //printf("Finished SPI transaction\n");
 
     // Confirm that we sent the number of bytes we wanted to.
     if (master_req.txCnt != tx_size) {
@@ -253,19 +207,9 @@ uint8_t w25qxx_interface_spi_qspi_write_read(uint8_t instruction, uint8_t instru
         printf("Tried to receive %d bytes but received %d bytes instead.\n", out_len, master_req.rxCnt);
         return 1;
     }
-    // printf("Message received: ");
-    // for (int i = 0; i < tx_size; i++) { //out_len; i++) {
-    //     printf("0x%02x ", master_rx[i]);
-    // }
-    // printf("\n");
 
     // Copy over the received data if it's successful.
     memcpy(out_buf, &(master_rx[tx_size-out_len]), out_len);
-    // printf("Output generated: ");
-    // for (int i = 0; i < out_len; i++) {
-    //     printf("0x%02x ", out_buf[i]);
-    // }
-    // printf("\n--\n");
 
     // Free the mallocs when we're done?
     free(master_tx);
@@ -274,15 +218,17 @@ uint8_t w25qxx_interface_spi_qspi_write_read(uint8_t instruction, uint8_t instru
     return 0;
 }
 
-/**
+
+/**********************************
  * @brief     interface delay ms
  * @param[in] ms
  * @note      none
- */
+**********************************/
 void w25qxx_interface_delay_ms(uint32_t ms)
 {
     MXC_Delay(ms*1000);
 }
+
 
 /**
  * @brief     interface delay us
@@ -294,11 +240,12 @@ void w25qxx_interface_delay_us(uint32_t us)
     MXC_Delay(us);
 }
 
-/**
+
+/******************************************
  * @brief     interface print format data
  * @param[in] fmt is the format data
  * @note      none
- */
+******************************************/
 void w25qxx_interface_debug_print(const char *const fmt, ...)
 {
     printf(fmt);

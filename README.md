@@ -1,32 +1,22 @@
-## Description
-This example demonstrates a SPI transaction between two distinct SPI peripherals on the MAX32660. 
-
-SPIMSS (SPI1) is setup as the master in this example and is configured by default to send/receive 1024 8-bit words to and from the slave. Likewise, SPI0 is setup as the slave and is also expecting to both send and receive 1024 8-bit words to and from the master.
-
-Once the master ends the transaction, the data received by the master and the slave is compared to the data sent by their counterpart to ensure all bytes were received properly.
+## MAX32660 SPI Toolkit
+This repository serves to demonstrate additional uses for the I2C and SPI buses which Maxim/Analog do not include in their
+surprisingly limited documention contained in the Maxim SDK. Really, all you're going to demonstrate is checking whether
+the bus works by sending a signal to myself? Not even an ounce of code to test an external device? Get real.
 
 
 ## Required Connections
+Obviously, you only need connections for whatever peripheral you are using. If you are on I2C, you need SDA and SCL
+between the MCU and the peripheral, and for SPI you need MOSI, MISO, CS, and SCK. The image below is helpful 
+reference if using the Eval Kit:
 
--   Connect a USB cable between the PC and the CN2 (USB/PWR) connector.
--   Open an terminal application on the PC and connect to the EV kit's console UART at 115200, 8-N-1.
--   Connect the SPI pins on headers JH3 and JH4. (P0.11-->P0.5 (MOSI), P0.10-->P0.4 (MISO), P0.12-->P0.6 (SCK), and P0.13-->P0.7 (CS))
+![MAX32660 Eval Kit Pinout](images/pinout.jpg)
+
+Useful to note that in the case of SPI, the default MOSI and MISO are P0.5 and P0.4 respectively, not P0.11/P0.10/P0.0/P0.1.
+If you want to use those you'll have to use the Maxim SDK's guide for altering those pinouts. If you're smart, just use
+the default ones, it's on a breadboard anyway. Grow up. 
 
 
-## Expected Output
-NOTE: The SPIMSS pins are shared with the Console UART so you may see some garbage characters in the terminal.
-
-The Console UART of the device will output these messages:
-
-```
-************************ SPI Master-Slave Example ************************
-This example sends data between two SPI peripherals in the MAX32660.
-SPI0 is configured as the slave and SPIMSS (SPI1) is configured as the master.
-Each SPI peripheral sends 1024 bytes on the SPI bus. If the data received
-by each SPI instance matches the data sent by the other instance, the
-LED will illuminate.
-
-Press SW2 to begin transaction.
-
-EXAMPLE SUCCEEDED!
-```
+## Errata
+- You definitely want to pull-up the *Write Protect* and *Hold* pins on your SPI storage. The standard is that
+they'll float if unused, and that being set to 1 indicates ignoring those lines. In all the code used in this 
+repository, both pin functions are unusued, thus it is highly recommended to pull-up; personally, we've been used 2.2kΩ resistors.

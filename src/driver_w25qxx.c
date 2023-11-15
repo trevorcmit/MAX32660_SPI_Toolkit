@@ -8358,9 +8358,7 @@ static uint8_t a_w25qxx_write_no_check(w25qxx_handle_t *handle, uint32_t addr, u
     }
     while( 1)                                                               /* loop */
     { 
-        // printf("while looping...\n");
         res = a_w25qxx_page_program(handle, addr, data, page_remain);       /* page program */
-        // printf("page program ...\n");
         if (res != 0)
         {
             handle->debug_print("w25qxx: page program failed.\n");          /* page program failed */
@@ -8433,8 +8431,7 @@ uint8_t w25qxx_write(w25qxx_handle_t *handle, uint32_t addr, uint8_t *data, uint
 
     while (1)                                                                                   /* loop */
     {    
-        printf("w25qxx_write: while loop starts...\n");
-
+        // printf("w25qxx_write: while loop starts...\n");
         res = a_w25qxx_read(handle, sec_pos * 4096, handle->buf_4k, 4096);                     /* read 4k data */
         if (res != 0)
         {
