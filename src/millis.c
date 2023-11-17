@@ -42,11 +42,9 @@ void ContinuousTimer(void)
 
     tmr.pres = TMR_PRES_1;
     tmr.mode = TMR_MODE_CONTINUOUS;
-    tmr.cmp_cnt = periodTicks; //SystemCoreClock*(1/interval_time);
+    tmr.cmp_cnt = periodTicks;       // SystemCoreClock*(1/interval_time);
     tmr.pol = 0;
 
     MXC_TMR_Init(CONT_TIMER, &tmr);
     MXC_TMR_Start(CONT_TIMER);
-
-    // printf("Continuous timer started.\n");
 }

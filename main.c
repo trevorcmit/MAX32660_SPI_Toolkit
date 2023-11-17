@@ -96,12 +96,13 @@ void writeLEDHigh();
 void writeI_LEDLow();
 void writeI_LEDHigh();
 
-void setup(void);
+void Setup(void);
 void testing(void);
 void collect(void);
-void chip_erase(void);
+void Chip_Erase(void);
+void Readout(void);
 float Read_Temp_Sensor(int which);
-void temp_collect(void);
+void Data_Collect(void);
 short Float32toFloat16(float input);
 
 
@@ -113,15 +114,19 @@ short Float32toFloat16(float input);
 
 int main(void)
 {
-    setup();
-    // chip_erase();
-    // collect();
+    Setup();
 
-    temp_collect();
+    // Chip_Erase();
+    // collect();
+    // Data_Collect();
+
+    // Readout();
+
+    // testing();
 }
 
 
-void setup(void)
+void Setup(void)
 {
     printf("\n\n------\nBeginning System Setup...\n");
 
@@ -148,8 +153,8 @@ void setup(void)
     MXC_GPIO_Config(&iLED);
     writeI_LEDLow();
 
-    writeI_LEDHigh();
-    writeLEDHigh();
+    // writeI_LEDHigh();
+    // writeLEDHigh();
     printf(" - Initialized LEDs.\n");
     /***********************************/
     
@@ -195,39 +200,146 @@ void setup(void)
     else            { printf(" - Initialized temp sensor 2.\n"); }
     /***********************************/
     printf("System Setup Complete!\n\n");
+
+
+    writeI_LEDHigh();
+    writeLEDHigh();
+    delay(1000);
 }
 
 
-void temp_collect(void)
+void Data_Collect(void)
 {
-    printf("\n------\nBeginning Temperature Data Collection...\n");
-    for (int n; n<10; n++)
+    printf("\n\n------\nBeginning Data Collection...\n");
+    unsigned short x1_, y1_, z1_;
+    uint32_t accel_addr = 0x00;
+    uint32_t temp_addr = 0x80000;
+
+    for (int MINUTES = 0; MINUTES < 10; MINUTES++) // Number of minutes we want to record data for
     {
-        int16_t val1 = Read_Temp_Sensor(1);
-        int16_t val2 = Read_Temp_Sensor(2);
+        // Initialize data buffers and indices
+        uint8_t* accel_data = (uint8_t*) malloc(18000 * sizeof(uint8_t));  // 60sec * 50hz = 3000 readings * 6 B = 18 kB
+        uint8_t* temp_data  = (uint8_t*) malloc(240 * sizeof(uint8_t));    // 60sec * 1hz = 60 readings * 4 B = 240 B
+        int accel_index = 0;
+        int temp_index = 0;
 
-        // printf val in binary
-        printf("\nval: ");
-        for (int i = 15; i >= 0; i--)
+        int SECONDS = 0;
+        while (SECONDS < 60)   // Number of seconds in a minute, since we need to perform certain actions at 1 Hz
         {
-            printf("%d", (val1 >> i) & 1);
-        }
-        printf("  ");
-        for (int i = 15; i >= 0; i--)
-        {
-            printf("%d", (val2 >> i) & 1);
+            uint32_t SecondStart = millis();
+            int SAMPLES = 0;
+            while (SAMPLES < 50)
+            {
+                uint32_t SampleStart = millis();
+
+                x1_ = Float32toFloat16( MXC4005XC_readX_Axis() );
+                y1_ = Float32toFloat16( MXC4005XC_readY_Axis() );
+                z1_ = Float32toFloat16( MXC4005XC_readZ_Axis() );
+
+                accel_data[accel_index]   = (uint8_t)(x1_ >> 8);
+                accel_data[accel_index+1] = (uint8_t)(x1_ & 0xFF);
+                accel_data[accel_index+2] = (uint8_t)(y1_ >> 8);
+                accel_data[accel_index+3] = (uint8_t)(y1_ & 0xFF);
+                accel_data[accel_index+4] = (uint8_t)(z1_ >> 8);
+                accel_data[accel_index+5] = (uint8_t)(z1_ & 0xFF);
+                accel_index += 6;
+
+                // printf("%d:%d --- %.2f C, %.2f C, (%.2f, %.2f, %.2f)\n", MINUTES, SECONDS, val1, val2, _x, _y, _z);
+
+                SAMPLES += 1;
+                while (millis() - SampleStart < 20); // Wait 20 ms to get 50 Hz sampling rate
+            }
+
+            // Get temp values, put in buffer, and increment index
+            short val1_16 = Float32toFloat16(Read_Temp_Sensor(1));
+            short val2_16 = Float32toFloat16(Read_Temp_Sensor(2));
+            temp_data[temp_index]   = (uint8_t)(val1_16 >> 8);
+            temp_data[temp_index+1] = (uint8_t)(val1_16 & 0xFF);
+            temp_data[temp_index+2] = (uint8_t)(val2_16 >> 8);
+            temp_data[temp_index+3] = (uint8_t)(val2_16 & 0xFF);
+            temp_index += 4;
+
+            SECONDS += 1;
+            while (millis() - SecondStart < 1000);  // Wait 1 second to get 1 Hz sampling rate
         }
 
-        delay(500);
+        // Save accel data buffer to flash
+        w25qxx_basic_write(accel_addr, accel_data, 18000);
+        free(accel_data);
+        accel_addr += 18000;
+
+        // Write temperature data buffer to flash
+        w25qxx_basic_write(temp_addr, temp_data, 240);
+        free(temp_data);
+        temp_addr += 240;
+
+        printf("MINUTE %d !!!!!!!!!!!!!!\n", MINUTES);
     }
-    printf("\nTemperature Data Collection Complete!\n\n");
+
+    printf("\nData Collection Complete!\n\n");
+}
+
+
+void Readout(void)
+{
+    // Print out Accelerometer Data
+    uint32_t read_addr = 0x00;
+    for (int i=0; i<10; i++)
+    {
+        /***** Try reading the page you just wrote *****/
+        uint32_t read_size = 18000; // Pick a number of bytes to read out.
+        uint8_t* data_boi = (uint8_t*) malloc(read_size*sizeof(uint8_t));
+
+        if (w25qxx_basic_read(read_addr, data_boi, read_size) > 0)
+        {
+            printf("Agh, basic read threw and error :(\n");
+        }
+        else
+        {
+            for (int i = 0; i < read_size; i++)
+            {
+                if (i % 16 == 0)     { printf("\n0x%06X |   ", read_addr + i); } 
+                else if (i % 8 == 0) { printf("  "); }
+                printf("%02X ", data_boi[i]);
+            }
+        }
+        read_addr += 18000;
+        free(data_boi);
+    }
+
+
+    // Print out Temperature data
+    read_addr = 0x80000;
+    printf("\n\nDELIMITER\n\n");
+
+    for (int i=0; i<10; i++)
+    {
+        /***** Try reading the page you just wrote *****/
+        uint32_t read_size = 240; // Pick a number of bytes to read out.
+        uint8_t* data_boi = (uint8_t*) malloc(read_size*sizeof(uint8_t));
+
+        if (w25qxx_basic_read(read_addr, data_boi, read_size) > 0)
+        {
+            printf("Agh, basic read threw and error :(\n");
+        }
+        else
+        {
+            for (int i = 0; i < read_size; i++)
+            {
+                if (i % 16 == 0)     { printf("\n0x%06X |   ", read_addr + i); } 
+                else if (i % 8 == 0) { printf("  "); }
+                printf("%02X ", data_boi[i]);
+            }
+        }
+        read_addr += 240;
+        free(data_boi);
+    }  
 }
 
 
 void collect(void)
 {
     printf("\n\n------\nBeginning Data Collection...\n");
-
     unsigned short x1_, y1_, z1_;
     uint32_t addr = 0x00;
 
@@ -237,7 +349,6 @@ void collect(void)
 
     uint8_t* to_write = (uint8_t*) malloc(SIZE*sizeof(uint8_t));
 
-    // Collect 40 three-axis samples to fill one page of memory
     for (int j=0; j<SIZE/6; j++)
     {
         StartTime = millis();
@@ -245,8 +356,6 @@ void collect(void)
         x1_ = Float32toFloat16( (float)MXC4005XC_readX_Axis() );
         y1_ = Float32toFloat16( (float)MXC4005XC_readY_Axis() );
         z1_ = Float32toFloat16( (float)MXC4005XC_readZ_Axis() );
-
-        // printf("x, y, z: %X, %X, %X\n", x1_, y1_, z1_);
 
         to_write[index]   = (uint8_t)(x1_ >> 8);
         to_write[index+1] = (uint8_t)(x1_ & 0xFF);
@@ -256,7 +365,6 @@ void collect(void)
         to_write[index+5] = (uint8_t)(z1_ & 0xFF);
 
         index += 6;
-
         // w25qxx_basic_write(addr, to_write, 6);
         // while(millis() - StartTime < 200);
     }
@@ -272,7 +380,8 @@ void collect(void)
     uint8_t* data_boi = (uint8_t*) malloc(read_size*sizeof(uint8_t));   // Malloc some space to hold the read data.
     printf("\n\n--\nReading %d bytes from address 0x%06X.\n", read_size, read_addr);
     // Do the read.
-    if (w25qxx_basic_read(read_addr, data_boi, read_size) > 0) {
+    if (w25qxx_basic_read(read_addr, data_boi, read_size) > 0)
+    {
         printf("Agh, basic read threw and error :(\n");
     }
     else
@@ -290,9 +399,11 @@ void collect(void)
 }
 
 
-void chip_erase(void)
+/******************************************************************
+ * Erase the entire chip, providing a status update along the way.
+******************************************************************/
+void Chip_Erase(void)
 {
-    /***** Try erasing the chip *****/
     printf("\n-------\nConducting a chip erase. This may take a few seconds...\n");
     if (w25qxx_basic_chip_erase() > 0)
     {
@@ -305,6 +416,9 @@ void chip_erase(void)
 }
 
 
+/*************************************************************
+ * Method to test the original Winbond code on Renesas chip.
+*************************************************************/
 void testing(void)
 {
     printf("\n\n\n******************** Renesas Chip SPI w/ Winbond SDK Attempt ********************\n");
@@ -375,7 +489,6 @@ void testing(void)
 
 
     /***** Try writing to a page *****/
-    /***** Try writing to a page *****/
     uint32_t write_size = 200;
     printf("\n--\nWriting %d bytes to address 0x%06X.\n", write_size, read_addr);
     // Fill our data_boi buffer with some recognizable values.
@@ -396,7 +509,7 @@ void testing(void)
         }
     }
 
-    // Do the write. 
+    // // Do the write. 
     if (w25qxx_basic_write(read_addr, data_boi, write_size) > 0) {
         printf("Agh, basic write threw an error :(\n");
     }

@@ -1,25 +1,4 @@
 DEPRECATED! use 'adapter driver' not 'interface'
 Info : auto-selecting first available session transport "swd". To override use 'transport select <transport>'.
-Info : CMSIS-DAP: SWD  supported
-Info : CMSIS-DAP: FW Version = 1.0
-Info : CMSIS-DAP: Interface Initialised (SWD)
-Info : SWCLK/TCK = 1 SWDIO/TMS = 1 TDI = 0 TDO = 0 nTRST = 0 nRESET = 1
-Info : CMSIS-DAP: Interface ready
-Info : clock speed 2000 kHz
-Info : SWD DPIDR 0x2ba01477
-Info : max32xxx.cpu: Cortex-M4 r0p1 processor detected
-Info : max32xxx.cpu: target has 6 breakpoints, 4 watchpoints
-Info : starting gdb server for max32xxx.cpu on pipe
-target halted due to debug-request, current mode: Thread 
-xPSR: 0x01000000 pc: 0xfffffffe msp: 0xfffffffc
-Info : Listening on port 6666 for tcl connections
-Info : Listening on port 4444 for telnet connections
-Info : accepting 'gdb' connection from pipe
-Warn : Prefer GDB command "target extended-remote :pipe" instead of "target remote :pipe"
-Info : SWD DPIDR 0x2ba01477
-Error: Failed to read memory at 0xfffff000
-target halted due to debug-request, current mode: Thread 
-xPSR: 0x01000000 pc: 0xfffffffe msp: 0xfffffffc
-target halted due to debug-request, current mode: Thread 
-xPSR: 0x01000000 pc: 0x000012e4 msp: 0x20018000
-Info : dropped 'gdb' connection
+Error: unable to find a matching CMSIS-DAP device
+
