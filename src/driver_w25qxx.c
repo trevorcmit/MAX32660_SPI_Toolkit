@@ -6796,7 +6796,8 @@ uint8_t w25qxx_set_burst_with_wrap(w25qxx_handle_t *handle, w25qxx_burst_wrap_t 
     return 0;                                                                        /* success return 0 */
 }
 
-/**
+
+/***********************************************************
  * @brief     initialize the chip
  * @param[in] *handle points to a w25qxx handle structure
  * @return    status code
@@ -6810,7 +6811,7 @@ uint8_t w25qxx_set_burst_with_wrap(w25qxx_handle_t *handle, w25qxx_burst_wrap_t 
  *            - 7 reset failed
  *            - 8 set address mode failed
  * @note      none
- */
+***********************************************************/
 uint8_t w25qxx_init(w25qxx_handle_t *handle)
 {
     uint8_t res;
@@ -7170,6 +7171,7 @@ uint8_t w25qxx_init(w25qxx_handle_t *handle)
     
     return 0;                                                                              /* success return 0 */
 }
+
 
 /**
  * @brief     close the chip

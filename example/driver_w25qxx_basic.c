@@ -67,6 +67,7 @@ uint8_t w25qxx_basic_init(w25qxx_type_t type, w25qxx_interface_t interface, w25q
         return 3;
     }
     
+    // printf("TYPE: %d\r\n", type);
     /* chip init */
     res = w25qxx_init(&gs_handle);
     if (res != 0)

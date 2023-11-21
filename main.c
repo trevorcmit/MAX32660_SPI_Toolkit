@@ -66,12 +66,13 @@ mxc_gpio_cfg_t iLED;
 uint8_t config[DATA_LEN];      // Placeholder for BLE messaging
 uint8_t rxdata[DATA_LEN];      // To get response from BLE
 uint8_t txdata[DATA_LEN];      // To send to SPI
-volatile uint32_t isr_cnt;
-volatile uint32_t isr_flags;
+// volatile uint32_t isr_cnt;
+// volatile uint32_t isr_flags;
 int error;
 bool startMsgRx = false;       // To break loops in app()
 uint32_t StartTime;
 int ADDRESS;
+
 
 /** BLE Command Hex Values for DA14531 **/
 enum BLE_COMMAND {
@@ -86,7 +87,11 @@ enum BLE_COMMAND {
 
     SYNCH_START_MSG =             0xBB,
     RESTART_LOOP =                0xDD,
-    DOWNLOAD_MSG =                0xCC,
+    // DOWNLOAD_MSG =                0xCC,
+
+    DATA_COLLECTION =             0x0C,  // C for Collect
+    DATA_DOWNLOAD   =             0x0D,  // D for Download
+    CHIP_ERASE      =             0x0E,  // E for Erase
 };
 
 // Helper Function Declarations
@@ -98,11 +103,19 @@ void writeI_LEDHigh();
 
 void Setup(void);
 void testing(void);
-void collect(void);
+
 void Chip_Erase(void);
 void Readout(void);
-float Read_Temp_Sensor(int which);
+
+// Functions for collection of data
 void Data_Collect(void);
+void Check_Peripheral_Status(void);
+float Read_Temp_Sensor(int which);
+
+void Command_Loop(void);
+
+static void sendBLEMessage(uint8_t *message, uint8_t sizeOfMessage);
+
 short Float32toFloat16(float input);
 
 
@@ -116,12 +129,12 @@ int main(void)
 {
     Setup();
 
+    Command_Loop();
+
     // Chip_Erase();
     // collect();
     // Data_Collect();
-
     // Readout();
-
     // testing();
 }
 
@@ -155,6 +168,7 @@ void Setup(void)
 
     // writeI_LEDHigh();
     // writeLEDHigh();
+    // delay(5000);
     printf(" - Initialized LEDs.\n");
     /***********************************/
     
@@ -162,9 +176,22 @@ void Setup(void)
     /************ SPI SETUP ************/
     uint8_t retVal = w25qxx_basic_init(0x1F16, W25QXX_INTERFACE_SPI, W25QXX_BOOL_FALSE);
     if (retVal==0)
+    {
+        // writeI_LEDLow();
+        // delay(500);
+        // writeI_LEDHigh();
+        // writeLEDHigh();
         printf(" - Initialized SPI bus & AT25SL64 flash.\n");
+        // delay(10000);
+    }
     else
-        printf(" - Failed to initialize SPI bus!!!");
+    {
+        // writeI_LEDLow();
+        // writeLEDLow();
+        // delay(100);
+        printf(" - Failed to initialize SPI bus!!!\n");
+        // NVIC_SystemReset(); // Reset MCU
+    }
     /***********************************/
 
 
@@ -198,13 +225,84 @@ void Setup(void)
     error = Wire_endTransmission();
     if (error != 0) { printf(" - Cannot find temp sensor 2!!!\n"); } 
     else            { printf(" - Initialized temp sensor 2.\n"); }
+
+    // Check for BLE Sensor
+    Wire_beginTransmission(BLE_SENSOR);
+    error = Wire_endTransmission();
+    if (error != 0) { printf(" - Cannot find BLE sensor!!!\n"); } 
+    else            { printf(" - Initialized BLE sensor.\n"); }
     /***********************************/
     printf("System Setup Complete!\n\n");
 
+    // writeI_LEDHigh();
+    // writeLEDHigh();
+    // delay(1000);
+}
 
-    writeI_LEDHigh();
-    writeLEDHigh();
-    delay(1000);
+
+void Command_Loop(void)
+{
+    /********* Block rest of app() until start synch msg is found. *********/ 
+    while (!startMsgRx)
+    {
+        printf("Waiting to receive command...\n");
+        memset(&config, I2C_FILLER, sizeof(config));
+        config[0] = GET_DATA_FROM_NODE_NUM;  // For peripheral BLE, we'll say that get data just retrieves some data
+        memset(&rxdata, 0, sizeof(rxdata));
+
+        do                                   // Check BLE Connection while waiting for commands...
+        {
+            Wire_shutdown();
+            delay(50);
+            Wire_begin();
+            delay(50);
+
+            sendBLEMessage(&config[0], sizeof(config));
+            delay(200);
+            error = Wire_requestFromAndRead(rxdata, BLE_SENSOR, sizeof(rxdata)/sizeof(rxdata[0]));
+            delay(1000);
+        } while (error != 0);
+
+
+        // if (rxdata[0]==DATA_COLLECTION)
+        // {
+        //     // Data_Collect();
+        //     printf("Received Data Collection command.\n");
+        //     delay(300);
+        //     Data_Collect();
+        // }
+        // else if (rxdata[0]==DATA_DOWNLOAD)
+        // {
+        //     printf("Received Data Download command.\n");
+        // }
+
+        switch (rxdata[0])
+        {
+            case DATA_COLLECTION:
+                printf("Received Data Collection command.\n");
+                break;
+
+            case DATA_DOWNLOAD:
+                printf("Received Data Download command.\n");
+                break;
+
+            case CHIP_ERASE:
+                printf("Received Chip Erase command.\n");
+                Chip_Erase();
+                break;
+
+            default:
+                break;
+        }
+
+    }
+    startMsgRx = false;
+}
+
+
+void Check_Peripheral_Status(void)
+{
+
 }
 
 
@@ -334,68 +432,6 @@ void Readout(void)
         read_addr += 240;
         free(data_boi);
     }  
-}
-
-
-void collect(void)
-{
-    printf("\n\n------\nBeginning Data Collection...\n");
-    unsigned short x1_, y1_, z1_;
-    uint32_t addr = 0x00;
-
-    int index = 0;
-
-    uint32_t SIZE = 18000;
-
-    uint8_t* to_write = (uint8_t*) malloc(SIZE*sizeof(uint8_t));
-
-    for (int j=0; j<SIZE/6; j++)
-    {
-        StartTime = millis();
-
-        x1_ = Float32toFloat16( (float)MXC4005XC_readX_Axis() );
-        y1_ = Float32toFloat16( (float)MXC4005XC_readY_Axis() );
-        z1_ = Float32toFloat16( (float)MXC4005XC_readZ_Axis() );
-
-        to_write[index]   = (uint8_t)(x1_ >> 8);
-        to_write[index+1] = (uint8_t)(x1_ & 0xFF);
-        to_write[index+2] = (uint8_t)(y1_ >> 8);
-        to_write[index+3] = (uint8_t)(y1_ & 0xFF);
-        to_write[index+4] = (uint8_t)(z1_ >> 8);
-        to_write[index+5] = (uint8_t)(z1_ & 0xFF);
-
-        index += 6;
-        // w25qxx_basic_write(addr, to_write, 6);
-        // while(millis() - StartTime < 200);
-    }
-    printf("time 0: %d\n", millis());
-    w25qxx_basic_write(addr, to_write, 6000);
-    printf("time 1: %d\n", millis());
-    printf("\nData Collection Complete!\n\n"); 
-
-
-    /***** Try reading the page you just wrote *****/
-    uint32_t read_size = SIZE; // Pick a number of bytes to read out.
-    uint32_t read_addr = 0x0;
-    uint8_t* data_boi = (uint8_t*) malloc(read_size*sizeof(uint8_t));   // Malloc some space to hold the read data.
-    printf("\n\n--\nReading %d bytes from address 0x%06X.\n", read_size, read_addr);
-    // Do the read.
-    if (w25qxx_basic_read(read_addr, data_boi, read_size) > 0)
-    {
-        printf("Agh, basic read threw and error :(\n");
-    }
-    else
-    {
-        printf("Read %d bytes! They are as follows (in hex):", read_size);
-        for (int i = 0; i < read_size; i++)
-        {
-            if (i % 256 == 0)    { printf("\n\nPage %d:", (read_addr + i)/256); }
-            if (i % 16 == 0)     { printf("\n0x%06X |   ", read_addr + i); } 
-            else if (i % 8 == 0) { printf("  "); }
-            printf("%02X ", data_boi[i]);
-        }
-        printf("\n");
-    }
 }
 
 
@@ -568,6 +604,26 @@ float Read_Temp_Sensor(int which)
 }
 
 
+/*******************************************************************************
+ * Message pointer to an array
+ * Will continue to re-send messages with 100ms delay until BLE ACK's properly
+*******************************************************************************/
+static void sendBLEMessage(uint8_t *message, uint8_t sizeOfMessage)
+{
+    Wire_beginTransmission(BLE_SENSOR);
+    Wire_write(message, sizeOfMessage);
+    int error = Wire_endTransmission();
+    if (error != 0) 
+        while(1)
+        {
+            Wire_beginTransmission(BLE_SENSOR);
+            Wire_write(message, sizeOfMessage);
+            error = Wire_endTransmission();
+            delay(50);
+        }
+}
+
+
 /**********************************************************************
  * Converts a float (32 bits) into memory space of short type (int16)
 **********************************************************************/
@@ -587,6 +643,11 @@ short Float32toFloat16(float input)
 
     return fltInt16;
 }
+
+
+/******************************
+ * Helper Functions
+******************************/
 
 void delay(int milliseconds)
 {
