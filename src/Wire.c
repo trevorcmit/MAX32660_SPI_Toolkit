@@ -20,7 +20,8 @@
 
 /*---------- Global Functions ----------*/
 #define I2C_MASTER      MXC_I2C1
-#define I2C_FREQ        100000
+// #define I2C_FREQ        100000
+#define I2C_FREQ    3400000
 
 mxc_i2c_req_t reqMaster;
 
@@ -58,6 +59,7 @@ int Wire_begin()
 *************************************************/
 void Wire_beginTransmission(int address)
 {
+  // printf("Wire_beginTransmission() address: %d\n", address);
 	reqMaster.addr = address;
 	return;
 }
@@ -79,6 +81,7 @@ void Wire_write(uint8_t transmitData[], int length)
 ******************************************/
 int Wire_endTransmission()
 {
+  // printf("Wire_endTransmission()\n");
 	int error = MXC_I2C_MasterTransaction(&reqMaster);
 	reqMaster = emptyI2Creq;
 	reqMaster.i2c = I2C_MASTER;

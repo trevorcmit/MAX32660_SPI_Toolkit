@@ -4,11 +4,6 @@
  * @version   1.0.0
  * @author    Shifeng Li
  * @date      2021-07-15
- * <h3>history</h3>
- * <table>
- * <tr><th>Date        <th>Version  <th>Author      <th>Description
- * <tr><td>2021/07/15  <td>1.0      <td>Shifeng Li  <td>first upload
- * </table>
 *********************************************************************/
 
 /***** Includes *****/ // Copied from SPI_MasterSlave
@@ -230,11 +225,11 @@ void w25qxx_interface_delay_ms(uint32_t ms)
 }
 
 
-/**
+/*********************************
  * @brief     interface delay us
  * @param[in] us
  * @note      none
- */
+*********************************/
 void w25qxx_interface_delay_us(uint32_t us)
 {
     MXC_Delay(us);

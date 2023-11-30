@@ -66,8 +66,6 @@ mxc_gpio_cfg_t iLED;
 uint8_t config[DATA_LEN];      // Placeholder for BLE messaging
 uint8_t rxdata[DATA_LEN];      // To get response from BLE
 uint8_t txdata[DATA_LEN];      // To send to SPI
-// volatile uint32_t isr_cnt;
-// volatile uint32_t isr_flags;
 int error;
 bool startMsgRx = false;       // To break loops in app()
 uint32_t StartTime;
@@ -91,7 +89,7 @@ enum BLE_COMMAND {
 
     DATA_COLLECTION =             0x0C,  // C for Collect
     DATA_DOWNLOAD   =             0x0D,  // D for Download
-    CHIP_ERASE      =             0x0E,  // E for Erase
+    CHIP_ERASE      =             0x1E,  // E for Erase
 };
 
 // Helper Function Declarations
@@ -109,7 +107,7 @@ void Readout(void);
 
 // Functions for collection of data
 void Data_Collect(void);
-void Check_Peripheral_Status(void);
+bool Check_Sensor_Status(void);
 float Read_Temp_Sensor(int which);
 
 void Command_Loop(void);
@@ -128,11 +126,10 @@ short Float32toFloat16(float input);
 int main(void)
 {
     Setup();
+    Check_Sensor_Status();
 
-    Command_Loop();
-
+    // Command_Loop();
     // Chip_Erase();
-    // collect();
     // Data_Collect();
     // Readout();
     // testing();
@@ -166,32 +163,26 @@ void Setup(void)
     MXC_GPIO_Config(&iLED);
     writeI_LEDLow();
 
-    // writeI_LEDHigh();
-    // writeLEDHigh();
-    // delay(5000);
     printf(" - Initialized LEDs.\n");
+
+    // led high for five seconds
+    // writeLEDHigh();
+    // writeI_LEDHigh();
+    // delay(5000);
     /***********************************/
     
 
     /************ SPI SETUP ************/
-    uint8_t retVal = w25qxx_basic_init(0x1F16, W25QXX_INTERFACE_SPI, W25QXX_BOOL_FALSE);
-    if (retVal==0)
-    {
-        // writeI_LEDLow();
-        // delay(500);
-        // writeI_LEDHigh();
-        // writeLEDHigh();
-        printf(" - Initialized SPI bus & AT25SL64 flash.\n");
-        // delay(10000);
-    }
-    else
-    {
-        // writeI_LEDLow();
-        // writeLEDLow();
-        // delay(100);
-        printf(" - Failed to initialize SPI bus!!!\n");
-        // NVIC_SystemReset(); // Reset MCU
-    }
+    // uint8_t retVal = w25qxx_basic_init(0x1F16, W25QXX_INTERFACE_SPI, W25QXX_BOOL_FALSE);
+    // if (retVal==0)
+    // {
+    //     printf(" - Initialized SPI bus & AT25SL64 flash.\n");
+    // }
+    // else
+    // {
+    //     printf(" - Failed to initialize SPI bus!!!\n");
+    //     // NVIC_SystemReset(); // Reset MCU
+    // }
     /***********************************/
 
 
@@ -208,35 +199,41 @@ void Setup(void)
     else printf(" - Initialized I2C controller port.\n");
 
     // Check Accelerometer
-    Wire_beginTransmission(ACCEL_SENSOR);
-    error = Wire_endTransmission();
-    if (error != 0) { printf(" - Cannot find accel sensor!!!\n"); } 
-    else            { printf(" - Initialized accel sensor.\n"); }
-    MXC4005XC_config(2); // Set accel sensor to 2G range
+    // Wire_beginTransmission(ACCEL_SENSOR);
+    // error = Wire_endTransmission();
+    // if (error != 0) { printf(" - Cannot find accel sensor!!!\n"); } 
+    // else            { printf(" - Initialized accel sensor.\n"); }
+    // MXC4005XC_config(2); // Set accel sensor to 2G range
 
-    // Check for Temp Sensor #1
-    Wire_beginTransmission(TEMP_SENSOR_1);
-    error = Wire_endTransmission();
-    if (error != 0) { printf(" - Cannot find temp sensor 1!!!\n"); } 
-    else            { printf(" - Initialized temp sensor 1.\n"); }
+    // Flash LED in 1 second intervals
+    // for (int i=0; i<20; i++)
+    // {
+    //     writeI_LEDHigh();
+    //     delay(500);
+    //     writeI_LEDLow();
+    //     delay(500);
+    // }
 
-    // Check for Temp Sensor #2
-    Wire_beginTransmission(TEMP_SENSOR_2);
-    error = Wire_endTransmission();
-    if (error != 0) { printf(" - Cannot find temp sensor 2!!!\n"); } 
-    else            { printf(" - Initialized temp sensor 2.\n"); }
+    // // Check for Temp Sensor #1
+    // Wire_beginTransmission(TEMP_SENSOR_1);
+    // error = Wire_endTransmission();
+    // if (error != 0) { printf(" - Cannot find temp sensor 1!!!\n"); } 
+    // else            { printf(" - Initialized temp sensor 1.\n"); }
+
+    // // Check for Temp Sensor #2
+    // Wire_beginTransmission(TEMP_SENSOR_2);
+    // error = Wire_endTransmission();
+    // if (error != 0) { printf(" - Cannot find temp sensor 2!!!\n"); } 
+    // else            { printf(" - Initialized temp sensor 2.\n"); }
 
     // Check for BLE Sensor
-    Wire_beginTransmission(BLE_SENSOR);
-    error = Wire_endTransmission();
-    if (error != 0) { printf(" - Cannot find BLE sensor!!!\n"); } 
-    else            { printf(" - Initialized BLE sensor.\n"); }
-    /***********************************/
-    printf("System Setup Complete!\n\n");
+    // Wire_beginTransmission(BLE_SENSOR);
+    // error = Wire_endTransmission();
+    // if (error != 0) { printf(" - Cannot find BLE sensor!!!\n"); } 
+    // else            { printf(" - Initialized BLE sensor.\n"); }
+    // /***********************************/
 
-    // writeI_LEDHigh();
-    // writeLEDHigh();
-    // delay(1000);
+    printf("System Setup Complete!\n\n");
 }
 
 
@@ -252,41 +249,43 @@ void Command_Loop(void)
 
         do                                   // Check BLE Connection while waiting for commands...
         {
-            Wire_shutdown();
-            delay(50);
-            Wire_begin();
-            delay(50);
+            Wire_shutdown(); delay(50);      // 50 ms delays required or else errors will occur
+            Wire_begin();    delay(50);
 
-            sendBLEMessage(&config[0], sizeof(config));
+            sendBLEMessage(&config[0], sizeof(config)); // keep 200 ms delay after to allow msg to send
             delay(200);
             error = Wire_requestFromAndRead(rxdata, BLE_SENSOR, sizeof(rxdata)/sizeof(rxdata[0]));
-            delay(1000);
+            delay(1500);
         } while (error != 0);
 
-
-        // if (rxdata[0]==DATA_COLLECTION)
-        // {
-        //     // Data_Collect();
-        //     printf("Received Data Collection command.\n");
-        //     delay(300);
-        //     Data_Collect();
-        // }
-        // else if (rxdata[0]==DATA_DOWNLOAD)
-        // {
-        //     printf("Received Data Download command.\n");
-        // }
 
         switch (rxdata[0])
         {
             case DATA_COLLECTION:
-                printf("Received Data Collection command.\n");
+            {
+                // First check that the I2C devices are still recognized
+                bool checked = Check_Sensor_Status();
+
+                if (checked)
+                {
+                    printf("Data Collection Starting...\n");
+                    // Data_Collect();
+                }
+                else
+                {
+                    printf("Data Collection has not begun.\n");
+                }
+
                 break;
+            }
 
             case DATA_DOWNLOAD:
+            {
                 printf("Received Data Download command.\n");
                 break;
+            }
 
-            case CHIP_ERASE:
+            case CHIP_ERASE: // 0x1E, 30
                 printf("Received Chip Erase command.\n");
                 Chip_Erase();
                 break;
@@ -300,9 +299,117 @@ void Command_Loop(void)
 }
 
 
-void Check_Peripheral_Status(void)
+/******************************************************
+ * Check that the I2C devices are still recognized
+ * Return true if all devices are recognized
+ * Return false if any device is not recognized
+******************************************************/
+bool Check_Sensor_Status(void)
 {
+    bool accel_flag = false;
+    bool temp1_flag = false;
+    bool temp2_flag = false;
 
+    printf("\n\n------\nChecking Sensor Status...\n");
+
+    // Check Accelerometer
+    Wire_beginTransmission(ACCEL_SENSOR);
+    error = Wire_endTransmission();
+    if (error != 0)
+    {
+        printf(" - Cannot find accel sensor!!!\n");
+        accel_flag = false;
+    }
+    else
+    {
+        printf(" - Initialized accel sensor.\n");
+        accel_flag = true;
+    }
+
+    // Check for Temp Sensor #1
+    Wire_beginTransmission(TEMP_SENSOR_1);
+    error = Wire_endTransmission();
+    if (error != 0)
+    {
+        printf(" - Cannot find temp sensor 1!!!\n");
+        temp1_flag = false;
+    }
+    else
+    {
+        printf(" - Initialized temp sensor 1.\n");
+        temp1_flag = true;
+    }
+
+    // Check for Temp Sensor #2
+    Wire_beginTransmission(TEMP_SENSOR_2);
+    error = Wire_endTransmission();
+    if (error != 0)
+    {
+        printf(" - Cannot find temp sensor 2!!!\n");
+        temp2_flag = false;
+    }
+    else
+    {
+        printf(" - Initialized temp sensor 2.\n");
+        temp2_flag = true;
+    }
+
+    // blink LED conditions
+
+    // if none, flash for two seconds
+    if ((!accel_flag)&&(!temp1_flag)&&(!temp2_flag))
+    {
+        // printf("No sensors\n");
+        // for (int i=0; i<50; i++)
+        // {
+        //     writeLEDHigh(); delay(100);
+        //     writeLEDLow();  delay(100);
+        // }
+
+        writeLEDHigh();
+        writeI_LEDHigh();
+        delay(15000);
+    }
+
+    // only accel, 1 second pulses
+    if ((accel_flag)&&(!temp1_flag)&&(!temp2_flag))
+    {
+        printf("Only accel\n");
+        for (int i=0; i<20; i++)
+        {
+            writeLEDHigh(); delay(1500);
+            writeLEDLow();  delay(1500);
+        }
+    }
+
+    // temp, no accel, 0.2 s pulses
+    else if ((!accel_flag)&&(temp1_flag)&&(temp2_flag))
+    {
+        printf("Only one temp\n");
+        for (int i=0; i<50; i++)
+        {
+            writeI_LEDHigh(); delay(500);
+            writeI_LEDLow();  delay(500);
+        }
+    }
+
+    // if both, keep light on static
+    else if ((accel_flag)&&(temp1_flag)&&(temp2_flag))
+    {
+        // printf("Both accel and temp\n");
+        // writeLEDHigh();
+        // writeI_LEDHigh();
+        // delay(10000);
+
+        printf("No sensors\n");
+        for (int i=0; i<100; i++)
+        {
+            writeLEDHigh(); delay(100);
+            writeLEDLow();  delay(100);
+        }
+    }
+
+    return true;
 }
 
 
@@ -435,9 +542,9 @@ void Readout(void)
 }
 
 
-/******************************************************************
- * Erase the entire chip, providing a status update along the way.
-******************************************************************/
+/****************************************************************
+ * Erase the entire chip, providing a status update afterwards.
+****************************************************************/
 void Chip_Erase(void)
 {
     printf("\n-------\nConducting a chip erase. This may take a few seconds...\n");

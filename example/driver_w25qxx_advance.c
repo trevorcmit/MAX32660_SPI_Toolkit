@@ -220,7 +220,7 @@ uint8_t w25qxx_advance_chip_erase(void)
 }
 
 
-/**
+/*****************************************************************************
  * @brief      advance example get the manufacturer && device id information
  * @param[out] *manufacturer points to a manufacturer buffer
  * @param[out] *device_id points to a device id buffer
@@ -228,7 +228,7 @@ uint8_t w25qxx_advance_chip_erase(void)
  *             - 0 success
  *             - 1 get manufacturer device id failed
  * @note       none
- */
+*****************************************************************************/
 uint8_t w25qxx_advance_get_id(uint8_t *manufacturer, uint8_t *device_id)
 {
     if (w25qxx_get_manufacturer_device_id(&gs_handle, manufacturer, device_id) != 0)

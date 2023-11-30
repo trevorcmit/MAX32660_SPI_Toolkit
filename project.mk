@@ -11,6 +11,7 @@
 
 TARGET=MAX32660
 BOARD=EvKit_V1
-MAXIM_PATH=/Users/adinagolden/MaximSDK
+# MAXIM_PATH=/Users/trevo/MaximSDK
+MAXIM_PATH=C:/MaximSDK
 MAKE=make
 PROJECT=SPI_MasterSlave
